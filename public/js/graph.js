@@ -307,9 +307,9 @@ document.addEventListener('DOMContentLoaded', () => {
       const x = offsetX + (node.x - minX) * scale;
       const y = offsetY + (node.y - minY) * scale;
       
-      // Calculate node radius based on degree (min 5, max 15)
+      // Use constant radius for all nodes
+      const radius = 8;
       const degree = graph.adjacencyList.get(nodeId)?.length || 0;
-      const radius = Math.max(5, Math.min(15, 5 + degree * 2));
       
       // Determine fill color based on animation status
       if (nodeId === animationStartNodeId) {
