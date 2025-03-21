@@ -149,6 +149,14 @@ function convertToGraphFormat(data) {
           endX = parseFloat(row['end_x']);
           endY = parseFloat(row['end_y']);
           endZ = parseFloat(row['end_z']);
+        } else if (row['Start x'] !== undefined) {
+          // Format with spaces in column names
+          startX = parseFloat(row['Start x']);
+          startY = parseFloat(row['Start y']);
+          startZ = parseFloat(row['Start z']);
+          endX = parseFloat(row['End x']);
+          endY = parseFloat(row['End y']);
+          endZ = parseFloat(row['End z']);
         }
       }
       
