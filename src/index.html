@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSV Line Drawer</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+        }
+        #canvas {
+            border: 1px solid #ccc;
+            display: block;
+            margin: 20px auto;
+        }
+        .controls {
+            max-width: 800px;
+            margin: 0 auto 20px;
+        }
+        button {
+            padding: 8px 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #fileInput {
+            margin-bottom: 10px;
+        }
+        .status {
+            margin-top: 10px;
+            padding: 5px;
+            color: #333;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="controls">
+        <h1>CSV Line Drawer</h1>
+        <p class="status">Auto-loading csv_test.csv...</p>
+        <p>You can also select a different CSV file if needed:</p>
+        <input type="file" id="fileInput" accept=".csv">
+        <button id="drawButton">Draw Lines</button>
+        <button id="clearButton">Clear Canvas</button>
+        <button id="reloadDefaultButton">Reload Default CSV</button>
+    </div>
+    <canvas id="canvas" width="800" height="600"></canvas>
+
+    <script src="script.js"></script>
+</body>
+</html> 
