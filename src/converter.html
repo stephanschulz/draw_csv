@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSV to Graph Converter</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        h1 {
+            color: #333;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        .card {
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        input[type="file"] {
+            display: block;
+            margin: 10px 0;
+            width: 100%;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 0;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        .status {
+            margin: 15px 0;
+            padding: 10px;
+            background-color: #f0f0f0;
+            border-left: 4px solid #2196F3;
+        }
+        .error {
+            background-color: #ffebee;
+            border-left: 4px solid #f44336;
+        }
+        .success {
+            background-color: #e8f5e9;
+            border-left: 4px solid #4CAF50;
+        }
+        #preview {
+            margin-top: 20px;
+            overflow-x: auto;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+    </style>
+</head>
+<body>
+    <h1>CSV to Graph Converter</h1>
+    
+    <div class="card">
+        <h2>Convert CSV to Graph Format</h2>
+        <p>
+            Upload your CSV file to convert it to the graph format (nodes.csv and edges.csv).
+            The CSV should have the format: ID,StartX,StartY,StartZ,EndX,EndY,EndZ
+        </p>
+        
+        <input type="file" id="csv-file" accept=".csv">
+        <button id="convert-button" disabled>Convert CSV</button>
+        
+        <div class="status" id="status-message" style="display: none;"></div>
+        
+        <div id="result-buttons" style="display: none;">
+            <button id="download-nodes">Download nodes.csv</button>
+            <button id="download-edges">Download edges.csv</button>
+        </div>
+    </div>
+    
+    <div class="card">
+        <h2>Or use the example CSV</h2>
+        <p>Use the sample CSV file (simple_points.csv) from the current directory.</p>
+        <button id="convert-example">Convert Example CSV</button>
+    </div>
+    
+    <div class="card" id="preview-card" style="display: none;">
+        <h2>Preview</h2>
+        <h3>Nodes</h3>
+        <div id="nodes-preview"></div>
+        
+        <h3>Edges</h3>
+        <div id="edges-preview"></div>
+    </div>
+    
+    <script src="csv_to_graph.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const csvFileInput = document.getElementById('csv-file');
+            const convertButton = document.getElementById('convert-button');
+            const convertExampleButton = document.getElementById('convert-example');
+            const downloadNodesButton = document.getElementById('download-nodes');
+            const downloadEdgesButton = document.getElementById('download-edges');
+            const statusMessage = document.getElementById('status-message');
+            const resultButtons = document.getElementById('result-buttons');
+            const previewCard = document.getElementById('preview-card');
+            const nodesPreview = document.getElementById('nodes-preview');
+            const edgesPreview = document.getElementById('edges-preview');
+            
+            // Store generated files
+            let generatedFiles = null;
+            
+            // Enable convert button when file is selected
+            csvFileInput.addEventListener('change', () => {
+                convertButton.disabled = !csvFileInput.files.length;
+            });
+            
+            // Process uploaded CSV file
+            convertButton.addEventListener('click', async () => {
+                if (!csvFileInput.files.length) return;
+                
+                const file = csvFileInput.files[0];
+                
+                // Show status
+                statusMessage.style.display = 'block';
+                statusMessage.textContent = 'Converting...';
+                statusMessage.className = 'status';
+                resultButtons.style.display = 'none';
+                
+                try {
+                    // Read file contents
+                    const reader = new FileReader();
+                    reader.onload = async (e) => {
+                        const csvContent = e.target.result;
+                        
+                        // Convert to graph format
+                        const { nodes, edges } = convertToGraphFormat(csvContent);
+                        
+                        // Generate CSV content
+                        const nodesCSV = generateNodesCSV(nodes);
+                        const edgesCSV = generateEdgesCSV(edges);
+                        
+                        // Store generated files
+                        generatedFiles = {
+                            nodesCSV,
+                            edgesCSV,
+                            stats: {
+                                nodeCount: nodes.length,
+                                edgeCount: edges.length
+                            }
+                        };
+                        
+                        // Update status
+                        statusMessage.textContent = `Conversion complete: ${nodes.length} unique nodes and ${edges.length} edges created.`;
+                        statusMessage.className = 'status success';
+                        
+                        // Show download buttons
+                        resultButtons.style.display = 'block';
+                        
+                        // Show preview
+                        showPreview(nodes, edges);
+                    };
+                    
+                    reader.readAsText(file);
+                } catch (error) {
+                    statusMessage.textContent = `Error: ${error.message}`;
+                    statusMessage.className = 'status error';
+                }
+            });
+            
+            // Process example CSV
+            convertExampleButton.addEventListener('click', async () => {
+                // Show status
+                statusMessage.style.display = 'block';
+                statusMessage.textContent = 'Converting...';
+                statusMessage.className = 'status';
+                resultButtons.style.display = 'none';
+                
+                try {
+                    const result = await convertCSVToGraphFiles('simple_points.csv');
+                    
+                    // Store generated files
+                    generatedFiles = result;
+                    
+                    // Update status
+                    statusMessage.textContent = `Conversion complete: ${result.stats.nodeCount} unique nodes and ${result.stats.edgeCount} edges created.`;
+                    statusMessage.className = 'status success';
+                    
+                    // Show download buttons
+                    resultButtons.style.display = 'block';
+                    
+                    // Parse the CSV content and show preview
+                    const nodes = parseCSVToArray(result.nodesCSV);
+                    const edges = parseCSVToArray(result.edgesCSV);
+                    showPreview(nodes, edges);
+                } catch (error) {
+                    statusMessage.textContent = `Error: ${error.message}`;
+                    statusMessage.className = 'status error';
+                }
+            });
+            
+            // Download nodes.csv
+            downloadNodesButton.addEventListener('click', () => {
+                if (generatedFiles) {
+                    downloadFile(generatedFiles.nodesCSV, 'nodes.csv');
+                }
+            });
+            
+            // Download edges.csv
+            downloadEdgesButton.addEventListener('click', () => {
+                if (generatedFiles) {
+                    downloadFile(generatedFiles.edgesCSV, 'edges.csv');
+                }
+            });
+            
+            // Parse CSV string to array of objects
+            function parseCSVToArray(csvString) {
+                const lines = csvString.trim().split('\n');
+                const headers = lines[0].split(',');
+                const result = [];
+                
+                for (let i = 1; i < lines.length; i++) {
+                    const values = lines[i].split(',');
+                    const obj = {};
+                    
+                    for (let j = 0; j < headers.length; j++) {
+                        const value = values[j];
+                        obj[headers[j]] = !isNaN(value) ? parseFloat(value) : value;
+                    }
+                    
+                    result.push(obj);
+                }
+                
+                return result;
+            }
+            
+            // Show preview tables
+            function showPreview(nodes, edges) {
+                // Show preview card
+                previewCard.style.display = 'block';
+                
+                // Create nodes table
+                const nodesSample = nodes.slice(0, 5); // Show first 5 nodes
+                let nodesTable = '<table><tr>';
+                
+                // Add headers
+                for (const key in nodesSample[0]) {
+                    nodesTable += `<th>${key}</th>`;
+                }
+                nodesTable += '</tr>';
+                
+                // Add rows
+                for (const node of nodesSample) {
+                    nodesTable += '<tr>';
+                    for (const key in node) {
+                        nodesTable += `<td>${typeof node[key] === 'number' ? node[key].toFixed(2) : node[key]}</td>`;
+                    }
+                    nodesTable += '</tr>';
+                }
+                
+                nodesTable += '</table>';
+                if (nodes.length > 5) {
+                    nodesTable += `<p>... and ${nodes.length - 5} more nodes</p>`;
+                }
+                
+                nodesPreview.innerHTML = nodesTable;
+                
+                // Create edges table
+                const edgesSample = edges.slice(0, 5); // Show first 5 edges
+                let edgesTable = '<table><tr>';
+                
+                // Add headers
+                for (const key in edgesSample[0]) {
+                    edgesTable += `<th>${key}</th>`;
+                }
+                edgesTable += '</tr>';
+                
+                // Add rows
+                for (const edge of edgesSample) {
+                    edgesTable += '<tr>';
+                    for (const key in edge) {
+                        edgesTable += `<td>${edge[key]}</td>`;
+                    }
+                    edgesTable += '</tr>';
+                }
+                
+                edgesTable += '</table>';
+                if (edges.length > 5) {
+                    edgesTable += `<p>... and ${edges.length - 5} more edges</p>`;
+                }
+                
+                edgesPreview.innerHTML = edgesTable;
+            }
+        });
+    </script>
+</body>
+</html> 
