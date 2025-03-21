@@ -261,6 +261,45 @@ document.addEventListener('DOMContentLoaded', () => {
     if (isAnimating && animationPath && animationPath.length >= 2) {
       animationStartNodeId = animationPath[0].nodeId;
       animationEndNodeId = animationPath[animationPath.length - 1].nodeId;
+      
+      // Draw the animation path with a special style
+      ctx.lineWidth = 4;
+      ctx.strokeStyle = '#f39c12'; // Orange for path highlight
+      
+      // Draw the path as a series of connected segments
+      ctx.beginPath();
+      ctx.moveTo(animationPath[0].x, animationPath[0].y);
+      
+      for (let i = 1; i < animationPath.length; i++) {
+        ctx.lineTo(animationPath[i].x, animationPath[i].y);
+      }
+      
+      ctx.stroke();
+      
+      // Add arrow indicators along the path
+      for (let i = 0; i < animationPath.length - 1; i++) {
+        const startX = animationPath[i].x;
+        const startY = animationPath[i].y;
+        const endX = animationPath[i+1].x;
+        const endY = animationPath[i+1].y;
+        
+        // Calculate direction and midpoint
+        const dx = endX - startX;
+        const dy = endY - startY;
+        const angle = Math.atan2(dy, dx);
+        const midX = startX + dx * 0.65; // Place arrow at 65% along the path
+        const midY = startY + dy * 0.65;
+        
+        // Draw arrowhead
+        const arrowSize = 6;
+        ctx.fillStyle = '#f39c12';
+        ctx.beginPath();
+        ctx.moveTo(midX + Math.cos(angle) * arrowSize, midY + Math.sin(angle) * arrowSize);
+        ctx.lineTo(midX + Math.cos(angle + 2.5) * arrowSize * 1.5, midY + Math.sin(angle + 2.5) * arrowSize * 1.5);
+        ctx.lineTo(midX + Math.cos(angle - 2.5) * arrowSize * 1.5, midY + Math.sin(angle - 2.5) * arrowSize * 1.5);
+        ctx.closePath();
+        ctx.fill();
+      }
     }
     
     // Draw nodes
